@@ -104,7 +104,7 @@ jobs:
         ninja check-circt-integration
         popd
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: circt-build
         path: circt/build/
