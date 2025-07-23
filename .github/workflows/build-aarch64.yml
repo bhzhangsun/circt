@@ -1,4 +1,4 @@
-name: CIRCT Build for aarch64
+name: CIRCT Build for ARM64
 
 on:
   push:
@@ -7,105 +7,64 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Install QEMU and dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
             build-essential \
             cmake \
+            ninja-build \
             git \
             python3 \
             python3-pip \
-            ninja-build \
             clang \
             lld \
             llvm-dev \
-            libclang-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo-dev \
-            libedit-dev \
-            libxml2-dev \
-            libxslt-dev \
-            libssl-dev \
-            libz-dev \
-            libbz2-dev \
-            liblzma-dev \
-            libreadline-dev \
-            libsqlite3-dev \
-            wget \
-            curl \
-            llvm \
-            lld \
-            clang-tidy \
-            clang-format \
-            qemu-user-static \
-            binfmt-support \
-            gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu
-
-    - name: Setup QEMU for aarch64
-      run: |
-        sudo update-binfmts --enable qemu-aarch64
-        sudo update-binfmts --install aarch64 /usr/bin/qemu-aarch64-static --magic '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' --mask '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            libclang-dev
 
     - name: Clone CIRCT and submodules
       run: |
         git clone https://github.com/llvm/circt.git
         cd circt
         git checkout firtool-1.85
-        ls
         git submodule init
         git submodule update
-        ls
         cd llvm
         git fetch --unshallow
 
-
-    - name: Build LLVM/MLIR for aarch64
+    - name: Build LLVM/MLIR
       run: |
         mkdir -p circt/llvm/build
-        pushd circt/llvm/build
+        cd circt/llvm/build
         cmake -G Ninja ../llvm \
             -DLLVM_ENABLE_PROJECTS="mlir" \
-            -DLLVM_TARGETS_TO_BUILD="host" \
+            -DLLVM_TARGETS_TO_BUILD="AArch64" \
             -DLLVM_ENABLE_ASSERTIONS=ON \
             -DCMAKE_BUILD_TYPE=DEBUG \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DCMAKE_CROSSCOMPILING=True \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         ninja
         ninja check-mlir
-        popd
 
-    - name: Build CIRCT for aarch64
+    - name: Build CIRCT
       run: |
         mkdir -p circt/build
-        pushd circt/build
+        cd circt/build
         cmake -G Ninja .. \
             -DMLIR_DIR=$PWD/../llvm/build/lib/cmake/mlir \
             -DLLVM_DIR=$PWD/../llvm/build/lib/cmake/llvm \
             -DLLVM_ENABLE_ASSERTIONS=ON \
             -DCMAKE_BUILD_TYPE=DEBUG \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DCMAKE_CROSSCOMPILING=True \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         ninja
         ninja check-circt
         ninja check-circt-integration
-        popd
+
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
