@@ -48,8 +48,9 @@ jobs:
             -DLLVM_TARGETS_TO_BUILD="AArch64" \
             -DLLVM_ENABLE_ASSERTIONS=OFF \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        ninja
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DLLVM_PARALLEL_LINK_JOBS=1
+        ninja -j2
         ninja check-mlir
 
     - name: Build CIRCT
@@ -61,8 +62,9 @@ jobs:
             -DLLVM_DIR=$PWD/../llvm/build/lib/cmake/llvm \
             -DLLVM_ENABLE_ASSERTIONS=OFF \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        ninja
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DLLVM_PARALLEL_LINK_JOBS=1
+        ninja -j2
         ninja check-circt
         ninja check-circt-integration
 
